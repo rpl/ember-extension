@@ -24,13 +24,13 @@
     cursor: default;
 }
 
-  .mixin_props_no .mixin__name:before {
-    opacity: 0;
-  }
+.mixin_props_no .mixin__name:before {
+  opacity: 0;
+}
 
-  .mixin.ember-mixin .mixin__name {
-    color: #888;
-  }
+.mixin.ember-mixin .mixin__name {
+  color: #888;
+}
 
 .mixin__name:before {
   content: "\25B6";
@@ -39,13 +39,13 @@
   font-size: 80%;
 }
 
-  .mixin_state_expanded .mixin__name:before {
-    content: "\25BC";
-  }
+.mixin_state_expanded .mixin__name:before {
+  content: "\25BC";
+}
 
-  .mixin.ember-mixin .mixin__name:before {
-    color: #aaa;
-  }
+.mixin.ember-mixin .mixin__name:before {
+  color: #aaa;
+}
 
 .mixin__properties {
   margin: 5px;
@@ -87,6 +87,7 @@
 
 .mixin__property-value {
   -webkit-flex: 1;
+  flex: 1;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -94,6 +95,7 @@
 
 .mixin__property-value-txt {
   -webkit-flex: 1;
+  flex: 1;
   border: solid 1px #ccc;
   /*border: none;*/
   box-shadow: 2px 2px 2px #888;
@@ -129,6 +131,7 @@
 
 .mixin__property-calculated-value {
   -webkit-flex: 1;
+  flex: 1;
   color: #999;
 }
 
