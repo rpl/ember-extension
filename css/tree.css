@@ -41,7 +41,6 @@
   color: #606;
 }
 
-
 .tree__node-template, .tree__node-hint {
   color: #595455;
   display: none;
@@ -51,20 +50,15 @@
   display: inline;
 }
 
-
 .tree__node-details {
   font-size: 13px;
   color: #999;
 }
 
-
-
-
 .tree__node-details td {
   padding: 0px 5px;
   color: #666;
 }
-
 
 .tree__node-details .clickable {
   /*color: #4896ab;*/
