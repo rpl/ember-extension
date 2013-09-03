@@ -1,30 +1,14 @@
-var Port = Ember.Object.extend(Ember.Evented, {
-  init: function() {
-    connect.apply(this);
-  },
-  send: function(messageType, options) {
-    options.type = messageType;
-    options.from = 'inspectedWindow';
-    this.get('chromePort').postMessage(options);
-  },
-  chromePort: null
-});
+import FirefoxPort from "port-firefox";
+import ChromePort from "port-chrome";
 
+var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
-var connect = function() {
-  var channel = new MessageChannel(), self = this;
-  var chromePort = channel.port1;
-  this.set('chromePort', chromePort);
-  window.postMessage('debugger-client', [channel.port2], '*');
+var Port;
 
-  chromePort.addEventListener('message', function(event) {
-    var message = event.data, value;
-    Ember.run(function() {
-      self.trigger(message.type, message);
-    });
-  });
-
-  chromePort.start();
-};
+if (is_chrome) {
+  Port = ChromePort;
+} else {
+  Port = FirefoxPort;
+}
 
 export default Port;

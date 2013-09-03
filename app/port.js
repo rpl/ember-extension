@@ -1,45 +1,14 @@
-var chromePort;
+import FirefoxPort from "port-firefox";
+import ChromePort from "port-chrome";
 
-var Port = Ember.Object.extend(Ember.Evented, {
-  init: function() {
-    connect.apply(this);
-  },
-  send: function(messageType, options) {
-    options = options || {};
-    options.from = 'devtools';
-    options.type = messageType;
-    chromePort.postMessage(options);
-  }
-});
+var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
+var Port;
 
-var connect = function() {
-  var self = this;
-  chromePort = chrome.extension.connect();
-  chromePort.postMessage({ appId: chrome.devtools.inspectedWindow.tabId });
-
-  chromePort.onMessage.addListener(function(message) {
-    self.trigger(message.type, message);
-  });
-};
-
-
-Ember.Application.initializer({
-  name: "port",
-
-  initialize: function(container, application) {
-    container.register('port:main', application.Port);
-    container.lookup('port:main');
-  }
-});
-
-Ember.Application.initializer({
-  name: "injectPort",
-
-  initialize: function(container) {
-    container.typeInjection('controller', 'port', 'port:main');
-    container.typeInjection('route', 'port', 'port:main');
-  }
-});
+if (is_chrome) {
+  Port = ChromePort;
+} else {
+  Port = FirefoxPort;
+}
 
 export default Port;
