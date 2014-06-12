@@ -7,7 +7,7 @@ self.port.on("emberDevTool", onEmberInspectorMessage);
 
 // NOTE: needed to cleanup on Firefox 27
 self.on("detach", cleanupOnDetach);
-// NOTE: needed to cleanup on Firefox 30
+// NOTE: needed to cleanup on Firefox 29
 self.port.on("detach", cleanupOnDetach);
 
 injectInPageScript();

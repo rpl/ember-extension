@@ -1,3 +1,5 @@
+const { Class } = require("sdk/core/heritage");
+
 const self = require("sdk/self");
 
 const tabs = require("./tomster-tabs");
@@ -36,12 +38,12 @@ exports.devtoolTabDefinition = {
 
   build: function(iframeWindow, toolbox) {
     // init devtool tab
-    EmberInspector.initialize(iframeWindow, toolbox);
-    return Promise.resolve(EmberInspector);
+    var emberInspector = new EmberInspector(iframeWindow, toolbox);
+    return Promise.resolve(emberInspector);
   }
 };
 
-let EmberInspector = {
+let EmberInspector = Class({
   initialize: function (iframeWindow, toolbox) {
     log("initialize");
     this.targetTabWorker = null;
@@ -150,4 +152,4 @@ let EmberInspector = {
       }
     }
   }
-};
+});
