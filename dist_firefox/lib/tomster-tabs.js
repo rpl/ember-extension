@@ -3,15 +3,12 @@ const { Class } = require('sdk/core/heritage');
 const { data } = require("sdk/self");
 
 const { PageMod } = require("sdk/page-mod");
-const { emit, on, off, once } = require("sdk/event/core");
-const { EventTarget } = require("sdk/event/target");
 
 const tabs = require("sdk/tabs");
 
-// route open/active/ready events (needed by tomster-locationbar-button)
-tabs.on('open', (tab) => emit(tomsterTabs, 'open', tab));
-tabs.on('activate', (tab) => emit(tomsterTabs, 'activate', tab));
-tabs.on('ready', (tab) => emit(tomsterTabs, 'ready', tab));
+const { emit, on, off, once } = require("sdk/event/core");
+const { EventTarget } = require("sdk/event/target");
+const { when: onUnload } = require("sdk/system/unload");
 
 // track attached workers and ember libraries detected by tab.id
 let workers = new Map();
@@ -32,6 +29,32 @@ const Tabs = Class({
 // exports tab tracker instance
 let tomsterTabs = Tabs();
 module.exports = tomsterTabs;
+
+// # INTERNALS
+
+// ## tab tracking
+
+let onTabOpen = (tab) => emit(tomsterTabs, 'open', tab);
+let onTabActivate = (tab) => emit(tomsterTabs, 'activate', tab);
+let onTabReady = (tab) => emit(tomsterTabs, 'ready', tab);
+
+function startTabTracking() {
+  // route open/active/ready events (needed by tomster-locationbar-button)
+  tabs.on('open', onTabOpen);
+  tabs.on('activate', onTabActivate);
+  tabs.on('ready', onTabReady);
+}
+
+function stopTabTracking() {
+  tabs.on('open', onTabOpen);
+  tabs.on('activate', onTabActivate);
+  tabs.on('ready', onTabReady);
+}
+
+startTabTracking();
+onUnload(stopTabTracking);
+
+// ## pagemod
 
 // create a page monitor to check ember versions and route
 // ember debug messages when needed
@@ -61,6 +84,8 @@ let pageMod = PageMod({
     }
   }
 });
+
+// ## messages forwarding
 
 function attachWorker(worker) {
   worker.port.on("emberVersion", routeEmberVersion);

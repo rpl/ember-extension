@@ -20,6 +20,8 @@ function enable() {
   // System JS : ERROR resource://gre/modules/commonjs/toolkit/loader.js ->
   //                   resource://gre/modules/commonjs/sdk/system/events.js:50 -
   //             TypeError: can't access dead object
+
+  // create tomster locationbar button and its attached panel
   panel = createPanel();
 
   button = UrlbarButton({
@@ -28,6 +30,8 @@ function enable() {
     panel: panel,
     tooltip : 'Ember Inspector',
   });
+
+  // register tomster-tabs events
 
   tabs.on('open', hidePanel);
 
@@ -38,12 +42,13 @@ function enable() {
 
 function disable() {
   try {
-    // unregister anchor widget from australis customizable ui jsm
+    // try to unregister anchor widget from australis customizable ui jsm
     let { Cu } = require("chrome");
     Cu.import("resource://app/modules/CustomizableUI.jsm");
     CustomizableUI.removeWidgetFromArea(TOMSTER_BUTTON_ID);
     CustomizableUI.destroyWidget(TOMSTER_BUTTON_ID);
   } catch(e) {
+    // don't fail on previous version but prevents silent errors
     console.error(e);
   }
 
@@ -53,6 +58,7 @@ function disable() {
     tabs.removeListener(event, refreshButton);
   });
 
+  // remove button and its panel if any
   if (button) {
     button.remove();
     button = null;
@@ -60,6 +66,8 @@ function disable() {
     panel = null;
   }
 }
+
+// # INTERNALS
 
 function hidePanel() {
   panel.hide();
