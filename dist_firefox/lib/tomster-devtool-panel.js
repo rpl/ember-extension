@@ -35,6 +35,85 @@ exports.devtoolTabDefinition = {
   }
 };
 
+let RemoteEmberInspector = Class({
+  initialize: function (iframeWindow, toolbox) {
+    this._toolbox = toolbox;
+    this._initRemoteInstrumenter(iframeWindow, toolbox);
+    this._initDevtoolPanel(iframeWindow);
+
+    return this;
+  },
+  destroy: function () {
+    this._destroyDevtoolPanel();
+    this._destroyRemoteInstrumenter();
+  },
+
+  _initDevtoolPanel: function(iframeWindow) {
+    this.iframeParent = iframeWindow;
+    this.iframeWindow = iframeWindow.document.querySelector("iframe");
+    this._handleDevtoolPanelMessage = this._handleDevtoolPanelMessage.bind(this);
+    this.iframeParent.addEventListener("message", this._handleDevtoolPanelMessage, false);
+  },
+
+  _destroyDevtoolPanel: function() {
+    this.iframeParent.removeEventListener("message", this._handleDevtoolPanelMessage, false);
+  },
+
+  _initRemoteInstrumenter: function(iframeWindow, toolbox) {
+    // 1. create a remote instrumenter
+    this._director = new DirectorFront(toolbox._target.client,
+                                     toolbox._target.form);
+    this._instrumenter = director.
+            install("ember-inspector",
+                    self.data.read('instrumenter-script.js'),
+                    {});
+    // 2. register remote events (target tab load, target tab message)
+    this._handleInstrumenterEvent = this._handleInstrumenterEvent.bind(this);
+    this._instrumenter.on("instrumenter-event",
+                          this._handleInstrumenterEvent);
+  },
+
+  _destroyRemoteInstrumenter: function() {
+    // unregister remote events handlers
+    this._instrumenter.off("instrumenter-event",
+                           this._handleInstrumenterEvent);
+    this._director.uninstall("ember-inspector");
+    delete this._instrumenter;
+    delete this._director;
+  },
+
+  _handleInstrumenterEvent: function(evt) {
+    if ("tab_load" in evt) {
+      this._handleTargetTabLoad();
+    }
+
+    if ("ember_message" in evt) {
+      this._handleTargetTabMessage(evt.ember_message);
+    }
+  },
+
+  _handleTargetTabLoad: function() {
+    // reload devtool panel
+    this.iframeWindow.contentWindow.location.reload(true);
+  },
+
+  _handleTargetTabMessage: function(msg) {
+    // handle dom inspection requests
+    // route message to the devtool panel
+    if (msg.type === "view:devtools:inspectDOMElement") {
+      inspectDOMElement(this.toolbox._target, msg.elementSelector,
+                        exports.devtoolTabDefinition.id);
+    } else {
+      // route to devtool panel
+      this.iframeWindow.contentWindow.postMessage(msg, "*");
+    }
+  },
+
+  _sendToTargetTab: function(msg) {
+     this._instrumenter.sendEvent("ember-devtool-event", msg);
+  }
+});
+
 let EmberInspector = Class({
   initialize: function (iframeWindow, toolbox) {
     log("initialize");
