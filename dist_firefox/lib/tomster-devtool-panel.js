@@ -4,16 +4,8 @@ const self = require("sdk/self");
 
 const tabs = require("./tomster-tabs");
 
-const { curry } = require("sdk/lang/functional");
-
-const log = curry(function log() {
-  var args = Array.prototype.slice.call(arguments, 0);
-  console.debug.apply(console, ["ember-extension: "].concat(args));
-});
-
-const logError = curry(function log(msg, e) {
-  console.error("ember-extensions: " + msg, e);
-});
+const log = console.log.bind(console, "ember-extension: ");
+const logError = console.error.bind(console, "ember-extension: ");
 
 const { openDevTool, inspectDOMElement,
         evaluateFileOnTargetWindow }  = require("./devtools-utils");
