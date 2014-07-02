@@ -7,7 +7,7 @@ const tabs = require("./tomster-tabs");
 const log = console.log.bind(console, "ember-extension: ");
 const logError = console.error.bind(console, "ember-extension: ");
 
-const { openDevTool, inspectDOMElement,
+const { openDevTool, inspectDOMElement, DirectorFront,
         evaluateFileOnTargetWindow }  = require("./devtools-utils");
 
 var Promise = require("sdk/core/promise.js");

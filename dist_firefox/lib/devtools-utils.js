@@ -27,6 +27,10 @@ exports.openDevTool = function(toolId) {
   return gDevToolsBrowser.selectToolCommand(gBrowser, toolId);
 };
 
+const devtools_require = gDevTools.loader.require;
+
+exports.DirectorFront = devtools_require("devtools/server/actors/director").DirectorFront;
+
 exports.inspectDOMElement = function(target, selector, toolId) {
   return gDevTools.showToolbox(target, "inspector").then(function(toolbox) {
     let sel = toolbox.getCurrentPanel().selection;
