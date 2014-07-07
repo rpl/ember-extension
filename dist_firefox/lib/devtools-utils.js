@@ -9,7 +9,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "gDevTools",
 XPCOMUtils.defineLazyModuleGetter(this, "gDevToolsBrowser",
                                   "resource:///modules/devtools/gDevTools.jsm");
 
-var Promise = require("sdk/core/promise.js");
+const { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const devtools_loader = devtools.require;
+
+exports.DirectorFront = devtools_loader("devtools/server/actors/director").DirectorFront;
+
+const { defer } = require("sdk/core/promise.js");
 
 const { getMostRecentBrowserWindow } = require("sdk/window/utils");
 
@@ -27,10 +32,6 @@ exports.openDevTool = function(toolId) {
   return gDevToolsBrowser.selectToolCommand(gBrowser, toolId);
 };
 
-const devtools_require = gDevTools.loader.require;
-
-exports.DirectorFront = devtools_require("devtools/server/actors/director").DirectorFront;
-
 exports.inspectDOMElement = function(target, selector, toolId) {
   return gDevTools.showToolbox(target, "inspector").then(function(toolbox) {
     let sel = toolbox.getCurrentPanel().selection;
@@ -39,7 +40,7 @@ exports.inspectDOMElement = function(target, selector, toolId) {
 };
 
 exports.evaluateFileOnTargetWindow = function(target, fileUrl) {
-  let { resolve, reject, promise } = Promise.defer();
+  let { resolve, reject, promise } = defer();
 
   let fileSource = self.data.load(fileUrl);
 
@@ -70,7 +71,7 @@ function consoleFor(target) {
 
   let { client, form: { consoleActor } } = target;
 
-  let { resolve, reject, promise } = Promise.defer();
+  let { resolve, reject, promise } = defer();
 
   client.attachConsole(consoleActor, [], (res, webconsoleClient) => {
     if (res.error) {

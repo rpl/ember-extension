@@ -10,7 +10,7 @@ const logError = console.error.bind(console, "ember-extension: ");
 const { openDevTool, inspectDOMElement, DirectorFront,
         evaluateFileOnTargetWindow }  = require("./devtools-utils");
 
-var Promise = require("sdk/core/promise.js");
+const { defer } = require("sdk/core/promise.js");
 
 exports.openEmberInspector = function () {
   openDevTool(exports.devtoolTabDefinition.id);
@@ -25,21 +25,33 @@ exports.devtoolTabDefinition = {
   tooltip: "Ember Inspector",
 
   isTargetSupported: function(target) {
+    return true;
     return target.isLocalTab;
   },
 
   build: function(iframeWindow, toolbox) {
     // init devtool tab
-    var emberInspector = new EmberInspector(iframeWindow, toolbox);
-    return Promise.resolve(emberInspector);
+    const { resolve, reject, promise } = defer();
+
+    var emberInspector = new RemoteEmberInspector(iframeWindow, toolbox);
+
+    emberInspector.setup().then(() => {
+        resolve(emberInspector);
+    }, (err) => {
+        reject(err);
+    });
+
+    return promise;
   }
 };
 
 let RemoteEmberInspector = Class({
   initialize: function (iframeWindow, toolbox) {
+    this._iframeWindow = iframeWindow;
     this._toolbox = toolbox;
-    this._initRemoteInstrumenter(iframeWindow, toolbox);
-    this._initDevtoolPanel(iframeWindow);
+
+    this._handleInstrumenterEvent = this._handleInstrumenterEvent.bind(this);
+    this._handleDevtoolPanelMessage = this._handleDevtoolPanelMessage.bind(this);
 
     return this;
   },
@@ -48,10 +60,14 @@ let RemoteEmberInspector = Class({
     this._destroyRemoteInstrumenter();
   },
 
+  setup: function() {
+    this._initDevtoolPanel(this._iframeWindow);
+    return this._initRemoteInstrumenter(this._iframeWindow, this._toolbox);
+  },
+
   _initDevtoolPanel: function(iframeWindow) {
     this.iframeParent = iframeWindow;
     this.iframeWindow = iframeWindow.document.querySelector("iframe");
-    this._handleDevtoolPanelMessage = this._handleDevtoolPanelMessage.bind(this);
     this.iframeParent.addEventListener("message", this._handleDevtoolPanelMessage, false);
   },
 
@@ -59,18 +75,25 @@ let RemoteEmberInspector = Class({
     this.iframeParent.removeEventListener("message", this._handleDevtoolPanelMessage, false);
   },
 
-  _initRemoteInstrumenter: function(iframeWindow, toolbox) {
+  _initRemoteInstrumenter: function (iframeWindow, toolbox) {
     // 1. create a remote instrumenter
     this._director = new DirectorFront(toolbox._target.client,
                                      toolbox._target.form);
-    this._instrumenter = director.
+    return this._director.
             install("ember-inspector",
-                    self.data.read('instrumenter-script.js'),
-                    {});
-    // 2. register remote events (target tab load, target tab message)
-    this._handleInstrumenterEvent = this._handleInstrumenterEvent.bind(this);
-    this._instrumenter.on("instrumenter-event",
-                          this._handleInstrumenterEvent);
+                    self.data.load('instrumenter-script.js'),
+                    {
+                      emberDebugScript: self.data.load('ember_debug/ember_debug.js'),
+                      inPageScript: self.data.load('in-page-script.js')
+                    }).
+          then((instrumenter) => {
+              this._instrumenter = instrumenter;
+              // 2. register remote events (target tab load, target tab message)
+              this._instrumenter.on("instrumenter-event",
+                                    this._handleInstrumenterEvent);
+              // activate instrumenter
+              this._instrumenter.activate(false);
+          });
   },
 
   _destroyRemoteInstrumenter: function() {
@@ -82,13 +105,23 @@ let RemoteEmberInspector = Class({
     delete this._director;
   },
 
+
+  _handleDevtoolPanelMessage: function(msg) {
+    log("_handleDevtoolPanelMessage", msg);
+    if (msg.origin === "resource://ember-inspector-at-emberjs-dot-com") {
+      this._sendToTargetTab(msg.data);
+    } else {
+      logError("_handleDevtoolPanelMessage INVALID ORIGIN", msg);
+    }
+  },
+
   _handleInstrumenterEvent: function(evt) {
-    if ("tab_load" in evt) {
+    if (evt.name === "tab_load") {
       this._handleTargetTabLoad();
     }
 
-    if ("ember_message" in evt) {
-      this._handleTargetTabMessage(evt.ember_message);
+    if (evt.name === "ember_message") {
+      this._handleTargetTabMessage(evt.data);
     }
   },
 
