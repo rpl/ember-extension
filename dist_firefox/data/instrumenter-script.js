@@ -6,8 +6,8 @@ module.exports = {
   },
   onGlobalCreated: function() {
     console.log("GLOBAL CREATED", instrumenter.target.window.wrappedJSObject.location);
-    instrumenter.emit("tab_load", {});
     initInstrumentation();
+    instrumenter.emit("tab_load", {});
   },
   onGlobalDestroyed: function() {
     console.log("GLOBAL DESTROYED");
@@ -24,6 +24,9 @@ module.exports = {
     cleanupOnDetach();
   }
 };
+
+initInstrumentation();
+instrumenter.emit("tab_load", {});
 
 function initInstrumentationDISABLED() {
   var res = instrumenter.target.evaluate(instrumenter.options.inPageScript);

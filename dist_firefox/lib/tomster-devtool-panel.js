@@ -87,12 +87,15 @@ let RemoteEmberInspector = Class({
                       inPageScript: self.data.load('in-page-script.js')
                     }).
           then((instrumenter) => {
+              log("GOT INSTRUMENTER", instrumenter);
               this._instrumenter = instrumenter;
               // 2. register remote events (target tab load, target tab message)
               this._instrumenter.on("instrumenter-event",
                                     this._handleInstrumenterEvent);
               // activate instrumenter
               this._instrumenter.activate(false);
+          }, () => {
+              log("GET INSTRUMENTER REJECTED", arguments);
           });
   },
 
