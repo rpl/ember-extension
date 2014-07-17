@@ -1,16 +1,16 @@
-var { window, document } = instrumenter.target;
-
 module.exports = {
   callableEchoMethod: function(param) {
     return param;
   },
-  onGlobalCreated: function() {
-    console.log("GLOBAL CREATED", instrumenter.target.window.wrappedJSObject.location);
-    initInstrumentation();
+  onGlobalCreated: function(window) {
+    console.log("GLOBAL CREATED", document.defaultView.location.toString());
+    initInstrumentation(window);
     instrumenter.emit("tab_load", {});
+    console.log("INSTRUMENTED");
   },
   onGlobalDestroyed: function() {
     console.log("GLOBAL DESTROYED");
+    instrumenter.emit("tab_load", {});
   },
   onEvent: function(name, data) {
     switch (name) {
@@ -25,15 +25,7 @@ module.exports = {
   }
 };
 
-initInstrumentation();
-instrumenter.emit("tab_load", {});
-
-function initInstrumentationDISABLED() {
-  var res = instrumenter.target.evaluate(instrumenter.options.inPageScript);
-  instrumenter.emit("inpagescript-injected", res);
-}
-
-function initInstrumentation() {
+function initInstrumentation(window) {
   // let ember-debug know that content script has executed
   if (document.documentElement || document.readyState == "complete") {
   console.log("EXECUTING EMBER DEBUG BRIDGE on: ",
@@ -51,7 +43,7 @@ function initInstrumentation() {
       document.body.dataset.emberExtension = 1;
     }
   } else {
-    window.setTimeout(initInstrumentation, 200);
+    window.setTimeout(() => initInstrumentation(window), 200);
   }
 }
 
@@ -72,8 +64,8 @@ function onEmberVersion(message) {
 }
 
 function injectInPageScript() {
-  instrumenter.target.evaluate(instrumenter.options.inPageScript);
-  instrumenter.target.evaluate(instrumenter.options.emberDebugScript);
+  instrumenter.evaluate(instrumenter.options.inPageScript);
+  instrumenter.evaluate(instrumenter.options.emberDebugScript);
 }
 
 function onEmberInspectorMessage(message) {

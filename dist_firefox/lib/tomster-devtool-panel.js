@@ -4,7 +4,7 @@ const self = require("sdk/self");
 
 const tabs = require("./tomster-tabs");
 
-const log = console.log.bind(console, "ember-extension: ");
+const log = console.debug.bind(console, "ember-extension: ");
 const logError = console.error.bind(console, "ember-extension: ");
 
 const { openDevTool, inspectDOMElement, DirectorFront,
@@ -119,6 +119,7 @@ let RemoteEmberInspector = Class({
   },
 
   _handleInstrumenterEvent: function(evt) {
+    log("HANDLE_INSTRUMENTER EVENT: " + evt.name);
     if (evt.name === "tab_load") {
       this._handleTargetTabLoad();
     }
@@ -146,7 +147,7 @@ let RemoteEmberInspector = Class({
   },
 
   _sendToTargetTab: function(msg) {
-     this._instrumenter.sendEvent("ember-devtool-event", msg);
+     this._instrumenter.sendSandboxEvent("ember-devtool-event", msg);
   }
 });
 
